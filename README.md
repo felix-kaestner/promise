@@ -34,7 +34,7 @@
 * Executes a function in a separate goroutine
 * Error Handling using functions (also executed in a separate goroutine)
 * Support for Generics (requires Go v1.18+)
-* Promises are resolved **lazily** of promises, upon a first call to `Await`, `AwaitOr`, `Then`, `OnSuccess` or `onFailure`
+* Promises are resolved **lazily**, upon a first call to `Await`, `AwaitOr`, `Then`, `OnSuccess` or `onFailure`
 
 ## Quickstart
 
