@@ -28,6 +28,14 @@
     </a>
 </p>
 
+## Features
+
+* Easy interface for composing async operations
+* Executes a function in a separate goroutine
+* Error Handling using functions (also executed in a separate goroutine)
+* Support for Generics (requires Go v1.18+)
+* Promises are resolved **lazily** of promises, upon a first call to `Await`, `AwaitOr`, `Then`, `OnSuccess` or `onFailure`
+
 ## Quickstart
 
 ```go
@@ -42,7 +50,7 @@ import (
 
 func main() {
     // Create a new promise.
-    // The http request is executed in a separate goroutine
+    // In this example the http request is executed in a separate goroutine
     p := promise.New(func() (*http.Response, error) {
         return http.Get("https://jsonplaceholder.typicode.com/posts/1")
     })
