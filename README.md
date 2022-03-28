@@ -1,7 +1,9 @@
 # Promise
 
 <p align="center">
-    <span>Go Promise Implementation with support for Generics (requires Go v1.18+). Run async operations in a separate goroutine on the fly.</span>
+    <span>Go Promise Implementation with support for Generics (requires Go v1.18+).</span>
+    <br>
+    <span>Run async operations in a separate goroutine on the fly.</span>
     <br><br>
     <a href="https://github.com/felix-kaestner/promise/issues">
         <img alt="Issues" src="https://img.shields.io/github/issues/felix-kaestner/promise?color=29b6f6&style=flat-square">
@@ -39,24 +41,34 @@ import (
 )
 
 func main() {
-	// Create a new promise.
-	p := promise.New(func() (*http.Response, error) {
-		return http.Get("https://jsonplaceholder.typicode.com/posts/1")
-	})
+    // Create a new promise.
+    p := promise.New(func() (*http.Response, error) {
+        return http.Get("https://jsonplaceholder.typicode.com/posts/1")
+    })
+    
+    // Handle successful and failed operations in a seperate goroutine
+    p.Then(func(res *http.Response) {
+        log.Printf("Status: %s", res.Status)
+    }, func(err error) {
+        log.Fatalln(err)
+    })
 
-    // Handle successful operations in a seperate goroutine
-	p.onSuccess(func(res *http.Response) {
-		log.Printf("Status: %s", res.Status)
-	})
+    // Handle only successful operations in a seperate goroutine
+    p.onSuccess(func(res *http.Response) {
+        log.Printf("Status: %s", res.Status)
+    })
 
-    // Handle failed operations in a seperate goroutine
-	p.onFailure(func(err error) {
-		log.Fatalln(err)
-	})
+    // Handle only failed operations in a seperate goroutine
+    p.onFailure(func(err error) {
+        log.Fatalln(err)
+    })
 
-	// Await the promise.
+    // Await the promise.
     // This blocks execution until the promise is resolved.
-	res, err := p.Await()
+    res, err := p.Await()
+    
+    // Provide a default value (calls Await() internally).
+    res = p.AwaitOr(nil)
 }
 ```
 
