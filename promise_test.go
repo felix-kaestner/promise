@@ -48,7 +48,7 @@ func assertEqual(t *testing.T, expected, actual any) {
 
 func TestPromise(t *testing.T) {
 	{
-		p := New(func() (res *http.Response, err error) {
+		p := New(func() (*http.Response, error) {
 			return http.Get("https://jsonplaceholder.typicode.com/posts/1")
 		})
 
@@ -68,12 +68,12 @@ func TestPromise(t *testing.T) {
 
 		res, err := p.Await()
 		assertEqual(t, 200, res.StatusCode)
-		assertEqual(t, nil, err)
+		assertNil(t, err)
 
 		assertEqual(t, res, p.AwaitOr(&http.Response{}))
 	}
 	{
-		p := New(func() (res *http.Response, err error) {
+		p := New(func() (*http.Response, error) {
 			return http.Get("https://abc.def")
 		})
 
