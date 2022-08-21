@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func isNil(i any) bool {
@@ -98,5 +99,21 @@ func TestPromise(t *testing.T) {
 		defaultRes := &http.Response{}
 		res = p.AwaitOr(defaultRes)
 		assertEqual(t, defaultRes, res)
+	}
+}
+
+func TestDone(t *testing.T) {
+	p := New(func() (bool, error) {
+		<-time.After(100 * time.Millisecond)
+		return true, nil
+	})
+
+	select {
+	case <-p.Done():
+		ok, err := p.Await()
+		assertEqual(t, true, ok)
+		assertNil(t, err)
+	case <-time.After(5000 * time.Millisecond):
+		t.Errorf("Test %s: Expected promise to be finished", t.Name())
 	}
 }

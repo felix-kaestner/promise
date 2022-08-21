@@ -78,6 +78,14 @@ func main() {
     
     // Provide a default value (calls Await() internally).
     res = p.AwaitOr(nil)
+
+    // Use channels to select the awaited promise 
+    select {
+    case <-p.Done():
+        res, err = p.Await() // returns immediately since the promise is already resolved
+    case <-time.After(5000 * time.Millisecond):
+        fmt.Println("Timeout")
+    }
 }
 ```
 
