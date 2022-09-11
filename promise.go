@@ -134,3 +134,86 @@ func New[T any](fn func() (T, error)) Promise[T] {
 		done: make(chan struct{}),
 	}
 }
+
+// All takes multiple promises and returns a single promise,
+// which will resolve to a slice of all the results of the promises.
+//
+// If any of the promises fail, the returned promise will fail as well
+// and contain the first error which occurred.
+func All[T any](ps ...Promise[T]) Promise[[]T] {
+	return New(func() (_ []T, err error) {
+		if len(ps) == 0 {
+			return make([]T, 0), nil
+		}
+
+		var wg sync.WaitGroup
+		var once sync.Once
+		cancel := make(chan struct{})
+		res := make([]T, len(ps))
+
+		wg.Add(len(ps))
+		for i, p := range ps {
+			go func(i int, p Promise[T]) {
+				defer wg.Done()
+				select {
+				case <-cancel:
+					return
+				case <-p.Done():
+					val, perr := p.Await()
+					if perr != nil {
+						once.Do(func() {
+							err = perr
+							close(cancel)
+						})
+						return
+					}
+					res[i] = val
+				}
+			}(i, p)
+		}
+		wg.Wait()
+
+		if err != nil {
+			return make([]T, 0), err
+		}
+		return res, nil
+	})
+}
+
+// All takes multiple promises and returns a single promise,
+// which will resolve to the value and error of the first promise
+// that finishes execution.
+func Race[T any](ps ...Promise[T]) Promise[T] {
+	return New(func() (t T, err error) {
+		if len(ps) == 0 {
+			return
+		}
+
+		var wg sync.WaitGroup
+		var once sync.Once
+		done := make(chan struct{})
+
+		wg.Add(len(ps))
+		for i, p := range ps {
+			go func(i int, p Promise[T]) {
+				defer wg.Done()
+				select {
+				case <-done:
+					return
+				case <-p.Done():
+					once.Do(func() {
+						var val T
+						if val, err = p.Await(); err == nil {
+							t = val
+						}
+						close(done)
+					})
+				}
+			}(i, p)
+		}
+		<-done
+		wg.Wait()
+
+		return
+	})
+}

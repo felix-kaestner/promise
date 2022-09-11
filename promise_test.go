@@ -1,6 +1,7 @@
 package promise
 
 import (
+	"errors"
 	"net/http"
 	"reflect"
 	"testing"
@@ -116,4 +117,131 @@ func TestDone(t *testing.T) {
 	case <-time.After(5000 * time.Millisecond):
 		t.Errorf("Test %s: Expected promise to be finished", t.Name())
 	}
+}
+
+func TestAll(t *testing.T) {
+	t.Run("Resolve", func(t *testing.T) {
+		p1 := New(func() (bool, error) {
+			<-time.After(100 * time.Millisecond)
+			return true, nil
+		})
+
+		p2 := New(func() (bool, error) {
+			<-time.After(200 * time.Millisecond)
+			return false, nil
+		})
+
+		start := time.Now()
+		res, err := All(p1, p2).Await()
+		assertEqual(t, []bool{true, false}, res)
+		assertNil(t, err)
+		if time.Since(start) <= 200*time.Millisecond {
+			t.Errorf("Test %s: Expected promise to be running for at least 200ms", t.Name())
+		}
+	})
+
+	t.Run("Error", func(t *testing.T) {
+		expected := errors.New("test error")
+		p1 := New(func() (bool, error) {
+			<-time.After(100 * time.Millisecond)
+			return true, expected
+		})
+
+		p2 := New(func() (bool, error) {
+			<-time.After(200 * time.Millisecond)
+			return false, nil
+		})
+
+		start := time.Now()
+		res, err := All(p1, p2).Await()
+		assertEqual(t, make([]bool, 0), res)
+		assertEqual(t, []bool{}, res)
+		assertEqual(t, 0, len(res))
+		assertEqual(t, expected, err)
+		if time.Since(start) >= 200*time.Millisecond {
+			t.Errorf("Test %s: Expected promise to be finished before 200ms have passed", t.Name())
+		}
+	})
+
+	t.Run("Error", func(t *testing.T) {
+		expected := errors.New("test error")
+		p1 := New(func() (bool, error) {
+			<-time.After(100 * time.Millisecond)
+			return true, nil
+		})
+
+		p2 := New(func() (bool, error) {
+			<-time.After(200 * time.Millisecond)
+			return false, expected
+		})
+
+		start := time.Now()
+		res, err := All(p1, p2).Await()
+		assertEqual(t, make([]bool, 0), res)
+		assertEqual(t, []bool{}, res)
+		assertEqual(t, 0, len(res))
+		assertEqual(t, expected, err)
+		if time.Since(start) <= 200*time.Millisecond {
+			t.Errorf("Test %s: Expected promise to be running for at least 200ms", t.Name())
+		}
+	})
+
+	t.Run("Empty/Default", func(t *testing.T) {
+		res, err := All[bool]().Await()
+		assertEqual(t, make([]bool, 0), res)
+		assertEqual(t, []bool{}, res)
+		assertEqual(t, 0, len(res))
+		assertNil(t, err)
+	})
+}
+
+func TestRace(t *testing.T) {
+	t.Run("Resolve", func(t *testing.T) {
+		p1 := New(func() (bool, error) {
+			<-time.After(100 * time.Millisecond)
+			return true, nil
+		})
+
+		p2 := New(func() (bool, error) {
+			<-time.After(200 * time.Millisecond)
+			return false, errors.New("test error")
+		})
+
+		start := time.Now()
+		res, err := Race(p1, p2).Await()
+		assertEqual(t, true, res)
+		assertNil(t, err)
+		if time.Since(start) >= 200*time.Millisecond {
+			t.Errorf("Test %s: Expected promise to be finished before 200ms have passed", t.Name())
+		}
+	})
+
+	t.Run("Error", func(t *testing.T) {
+		var defaultVal bool
+		expected := errors.New("test error")
+		p1 := New(func() (bool, error) {
+			<-time.After(100 * time.Millisecond)
+			return true, expected
+		})
+
+		p2 := New(func() (bool, error) {
+			<-time.After(200 * time.Millisecond)
+			return false, nil
+		})
+
+		start := time.Now()
+		res, err := Race(p1, p2).Await()
+		assertEqual(t, defaultVal, res)
+		assertEqual(t, expected, err)
+		if time.Since(start) >= 200*time.Millisecond {
+			t.Errorf("Test %s: Expected promise to be finished before 200ms have passed", t.Name())
+		}
+	})
+
+	t.Run("Empty/Default", func(t *testing.T) {
+		var defaultVal bool
+		res, err := Race[bool]().Await()
+		assertEqual(t, defaultVal, res)
+		assertNil(t, err)
+	})
 }
