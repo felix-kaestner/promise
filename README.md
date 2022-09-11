@@ -35,6 +35,7 @@
 * Error Handling using functions (also executed in a separate goroutine)
 * Support for Generics (requires Go v1.18+)
 * Promises are resolved **lazily**, upon a first call to `Await`, `AwaitOr`, `Then`, `OnSuccess` or `onFailure`
+* Support for `promise.All` and `promise.Race` (equivalent to the JavaScript [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) object) 
 
 ## Quickstart
 
@@ -86,6 +87,25 @@ func main() {
     case <-time.After(5000 * time.Millisecond):
         fmt.Println("Timeout")
     }
+
+    // Take multiple promises and wait for all of them to be finished
+    p1 := promise.New(func() (*http.Response, error) {
+        return http.Get("https://jsonplaceholder.typicode.com/posts/1")
+    })
+    p2 := promise.New(func() (*http.Response, error) {
+        return http.Get("https://jsonplaceholder.typicode.com/posts/2")
+    })
+    res, err := promise.All(p1, p2).Await()
+
+    // Take multiple promises and wait until the first of them to is finished
+    p1 := promise.New(func() (*http.Response, error) {
+        return http.Get("https://jsonplaceholder.typicode.com/posts/3")
+    })
+    p2 := promise.New(func() (*http.Response, error) {
+        return http.Get("https://jsonplaceholder.typicode.com/posts/4")
+    })
+    res, err := promise.Race(p1, p2).Await()
+
 }
 ```
 
