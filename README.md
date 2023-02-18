@@ -20,9 +20,9 @@
     <a href="https://goreportcard.com/report/github.com/felix-kaestner/promise">
         <img alt="Issues" src="https://goreportcard.com/badge/github.com/felix-kaestner/promise?style=flat-square">
     </a>
-    <!-- <a href="https://codecov.io/gh/felix-kaestner/promise">
-        <img src="https://img.shields.io/codecov/c/github/felix-kaestner/promise?style=flat-square&token=KK7ZG7A90X"/>
-    </a> -->
+    <a href="https://codecov.io/gh/felix-kaestner/promise">
+        <img src="https://img.shields.io/codecov/c/github/felix-kaestner/promise?style=flat-square&token=fkA8YwGXkk"/>
+    </a>
     <a href="https://twitter.com/kaestner_felix">
         <img alt="Twitter" src="https://img.shields.io/badge/twitter-@kaestner_felix-29b6f6?style=flat-square">
     </a>
